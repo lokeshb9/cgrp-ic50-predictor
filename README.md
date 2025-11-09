@@ -46,8 +46,8 @@ brew install openjdk
 
 ```bash
 # Clone repository
-git clone https://github.com/danigeiger/CGRP_gepant_ML_project.git
-cd CGRP_gepant_ML_project
+git clone https://github.com/danigeiger/cgrp-ic50-predictor.git
+cd cgrp-ic50-predictor
 
 # Create virtual environment
 pyenv virtualenv 3.12.11 cgrp-project
@@ -250,7 +250,7 @@ MIT License - Free for research and educational use
 ## 📞 Contact
 
 - **GitHub**: [github.com/danigeiger](https://github.com/danigeiger)
-- **Project**: [CGRP Predictor](https://github.com/danigeiger/CGRP_gepant_ML_project)
+- **Project**: [CGRP IC50 Predictor](https://github.com/danigeiger/cgrp-ic50-predictor)
 
 ---
 

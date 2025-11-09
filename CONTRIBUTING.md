@@ -9,7 +9,7 @@
 ### Installation
 ```bash
 # Clone and navigate
-cd /Users/lokib/CascadeProjects/CGRP_gepant_ML_project
+cd cgrp-ic50-predictor
 
 # Create environment
 pyenv virtualenv 3.12.11 cgrp-project
