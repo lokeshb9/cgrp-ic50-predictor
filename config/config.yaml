@@ -1,0 +1,75 @@
+# CGRP Predictor Configuration
+# Professional configuration management for production deployment
+
+app:
+  title: "CGRP Receptor Antagonist IC50 Predictor"
+  page_icon: "🧬"
+  layout: "wide"
+  initial_sidebar_state: "expanded"
+
+paths:
+  models_dir: "models"
+  assets_dir: "assets"
+  temp_dir: "temp"
+  data_dir: "data"
+  
+models:
+  random_forest: "rf_reg.joblib"
+  scaler: "target_scaler.joblib"
+  variance_selector: "variance_selector.joblib"
+  
+images:
+  cgrp_receptor: "assets/images/inhib_CGRP.gif"
+  resume: "assets/images/az_team.jpg"
+  biography:
+    - "assets/images/Domino.jpg"
+    - "assets/images/Mom&Me.jpg"
+    - "assets/images/papr.jpg"
+
+processing:
+  padel:
+    fingerprints: true
+    retain_order: true
+    timeout_seconds: 300
+  
+  variance_threshold: 0.16  # Bernoulli formula: 0.8 * (1 - 0.8)
+  test_size: 0.2
+  random_state: 42
+
+predictions:
+  ic50_thresholds:
+    active_max: 1000  # nM
+    intermediate_max: 10000  # nM
+  
+  batch_sizes:
+    small: 20
+    medium: 100
+    large: 500
+
+ui:
+  theme:
+    primary_color: "#1f77b4"
+    background_color: "#ffffff"
+    secondary_background_color: "#f0f2f6"
+    text_color: "#262730"
+    font: "sans-serif"
+  
+  progress_messages:
+    reading: "📂 Reading uploaded file..."
+    preparing: "🔧 Preparing molecular data..."
+    fingerprinting: "🧬 Generating molecular fingerprints... This may take 1-2 minutes."
+    predicting: "🤖 Making predictions..."
+    complete: "✨ Predictions complete!"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/cgrp_predictor.log"
+
+metadata:
+  version: "1.0.0"
+  author: "Dani Geiger"
+  model_version: "v1.0"
+  training_date: "2024"
+  training_samples: 538
+

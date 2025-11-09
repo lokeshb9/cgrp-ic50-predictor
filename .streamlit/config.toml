@@ -1,0 +1,54 @@
+# Streamlit Configuration
+# =======================
+# Configuration for better development experience and auto-reload behavior
+
+[server]
+# Enable file watcher for auto-reload
+fileWatcherType = "auto"
+
+# Enable running on save
+runOnSave = true
+
+# Port configuration
+port = 8501
+
+# Enable CORS and XSRF protection
+enableCORS = true
+enableXsrfProtection = true
+
+[browser]
+# Automatically open browser on start
+gatherUsageStats = false
+
+# Server address
+serverAddress = "localhost"
+
+[runner]
+# Automatically rerun on file changes
+magicEnabled = true
+
+# Faster reruns
+fastReruns = true
+
+[client]
+# Show error details
+showErrorDetails = true
+
+# Toolbar mode
+toolbarMode = "auto"
+
+[theme]
+# Custom theme colors (matching our CSS)
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[logger]
+# Logging level for Streamlit
+level = "info"
+
+# Log messages format
+messageFormat = "%(asctime)s %(message)s"
+

@@ -8,17 +8,17 @@ from padelpy import padeldescriptor
 @st.cache_data
 def load_model():
     """Load trained Random Forest model."""
-    return joblib.load("rf_reg.joblib") if os.path.exists("rf_reg.joblib") else None
+    return joblib.load("models/rf_reg.joblib") if os.path.exists("models/rf_reg.joblib") else None
 
 @st.cache_data
 def load_variance_selector():
     """Load VarianceThreshold selector."""
-    return joblib.load("variance_selector.joblib") if os.path.exists("variance_selector.joblib") else None
+    return joblib.load("models/variance_selector.joblib") if os.path.exists("models/variance_selector.joblib") else None
 
 @st.cache_data
 def load_scaler():
     """Load StandardScaler for inverse transformation."""
-    return joblib.load("target_scaler.joblib") if os.path.exists("target_scaler.joblib") else None
+    return joblib.load("models/target_scaler.joblib") if os.path.exists("models/target_scaler.joblib") else None
 
 # Load model files
 model = load_model()
@@ -27,12 +27,12 @@ scaler = load_scaler()
 
 # Define images for each tab
 TAB_IMAGES = {
-    "CGRP Receptor": "inhib_CGRP.gif",
-    "Resume": "az_team.jpg"
+    "CGRP Receptor": "assets/images/inhib_CGRP.gif",
+    "Resume": "assets/images/az_team.jpg"
 }
 
 # Define images for the Biography tab (side by side)
-biography_pics = ["Domino.jpg", "Mom&Me.jpg", "papr.jpg"]
+biography_pics = ["assets/images/Domino.jpg", "assets/images/Mom&Me.jpg", "assets/images/papr.jpg"]
 
 # Function to Detect ChEMBL ID and SMILES Columns
 def detect_columns(df):
@@ -135,7 +135,32 @@ with tab1:
 
     image_path = TAB_IMAGES["CGRP Receptor"]
     if os.path.exists(image_path):
-        st.image(image_path, use_container_width=True)
+        st.image(image_path, use_column_width=True)
+
+    # Information Section
+    with st.expander("ℹ️ About This Tool"):
+        st.write("""
+        **What it does:** Predicts IC50 values (inhibitory concentration) for small molecules against the CGRP receptor.
+        
+        **How it works:** 
+        - Converts SMILES strings to molecular fingerprints using PaDEL
+        - Uses a trained Random Forest model (R² = 0.82, trained on 538 compounds)
+        - Returns predicted IC50 in nanomolar (nM)
+        
+        **Input format:**
+        - Two columns: ChEMBL_ID and SMILES string
+        - Accepts CSV or TXT files
+        - See example files below for format
+        """)
+    
+    with st.expander("⚠️ Limitations"):
+        st.write("""
+        - Predictions are computational estimates, not experimental measurements
+        - Most accurate for small molecules (<2000 Daltons)
+        - Best for structures similar to training data
+        - Should not replace laboratory validation
+        - Requires Java Runtime Environment (JRE) to be installed
+        """)
 
     # File uploader for TXT or CSV
     file_type = st.radio("Choose File Type:", ["CSV", "TXT"])
@@ -143,43 +168,63 @@ with tab1:
 
     if uploaded_file:
         try:
-            df = pd.read_csv(uploaded_file, sep=None, engine="python", header=None)
-            if df.shape[1] != 2:
-                st.error(f"Expected 2 columns, but found {df.shape[1]}. Please check your file format.")
-                st.stop()
+            with st.spinner('📂 Reading uploaded file...'):
+                df = pd.read_csv(uploaded_file, sep=None, engine="python", header=None)
+                if df.shape[1] != 2:
+                    st.error(f"❌ Expected 2 columns, but found {df.shape[1]}.")
+                    st.info("💡 **File Format Required:**\n- Column 1: ChEMBL ID\n- Column 2: SMILES string")
+                    st.stop()
 
             df.columns = ["ChEMBL_ID", "SMILES"]
+            st.success(f"✅ Loaded {len(df)} molecules")
             st.write("**Uploaded Data Sample**")
             st.write(df.head(10))
 
-            smi_file = prepare_padel_input(df)
-            if smi_file is None:
-                st.stop()
+            with st.spinner('🔧 Preparing molecular data...'):
+                smi_file = prepare_padel_input(df)
+                if smi_file is None:
+                    st.stop()
 
-            fingerprints_file = generate_fingerprints(smi_file)
-            df_fingerprints = pd.read_csv(fingerprints_file)
+            with st.spinner('🧬 Generating molecular fingerprints... This may take 1-2 minutes.'):
+                fingerprints_file = generate_fingerprints(smi_file)
+                df_fingerprints = pd.read_csv(fingerprints_file)
 
-            df_predictions = predict_ic50(df_fingerprints)
-            if df_predictions is None:
-                st.error("⚠️ No predictions were generated.")
-                st.stop()
+            with st.spinner('🤖 Making predictions...'):
+                df_predictions = predict_ic50(df_fingerprints)
+                if df_predictions is None:
+                    st.error("⚠️ No predictions were generated.")
+                    st.stop()
 
+            st.success("✨ Predictions complete!")
             st.write("**Predictions**")
             st.write(df_predictions.head(10))
 
             # Download Button
             pred_csv = df_predictions.to_csv(index=False).encode("utf-8")
-            st.download_button("Download Prediction Results", pred_csv, "predictions.csv", "text/csv")
+            st.download_button("📥 Download Prediction Results", pred_csv, "predictions.csv", "text/csv")
+
+            # Clean up temporary files
+            for temp_file in [smi_file, fingerprints_file]:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
 
         except Exception as e:
-            st.error(f"⚠️ Error reading file: {e}")
+            st.error(f"⚠️ Error: {e}")
+            if "Java" in str(e) or "java" in str(e):
+                st.error("🔴 **Java is not installed!**")
+                st.info("PaDEL requires Java Runtime Environment (JRE). Please install:\n- macOS: `brew install openjdk`\n- Windows/Linux: Download from https://www.java.com")
+            # Clean up any partial files
+            for temp_file in ["molecules.smi", "fingerprints.csv"]:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
 
     # Example Files
     st.write("### Example Input Files")
-    for file in ["example_input.csv", "example_input.txt"]:
+    for file in ["data/example_input.csv", "data/example_input.txt"]:
         if os.path.exists(file):
             with open(file, "rb") as f:
-                st.download_button(f" Download {file}", f.read(), file, "text/csv")
+                filename = os.path.basename(file)
+                st.download_button(f"📄 Download {filename}", f.read(), filename, "text/csv")
 
 
 #  **Resume Tab**
@@ -189,7 +234,7 @@ with tab2:
     # Display Resume image
     image_path = TAB_IMAGES["Resume"]
     if os.path.exists(image_path):
-        st.image(image_path, use_container_width=True)
+        st.image(image_path, use_column_width=True)
 
     st.write("""
     ## **Professional Summary**  
@@ -242,9 +287,9 @@ with tab3:
 
     # Display images side by side
     col1, col2, col3 = st.columns(3)
-    with col1: st.image(biography_pics[0], use_container_width=True)
-    with col2: st.image(biography_pics[1], use_container_width=True)
-    with col3: st.image(biography_pics[2], use_container_width=True)
+    with col1: st.image(biography_pics[0], use_column_width=True)
+    with col2: st.image(biography_pics[1], use_column_width=True)
+    with col3: st.image(biography_pics[2], use_column_width=True)
 
     st.write("""
     ### About Me  
